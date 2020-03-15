@@ -1,10 +1,12 @@
-_**`single`**_
+#### Works with **`single`** value:
 
-[https://example.com/{example}] - like queries can be gathered by **request.Context().Value("example")**
+[https://example.com/{value1}] - values can be gathered by **request.Context().Value("example")**
 
-Also woks with **_`multiple`_**
-[https://example.com/{example}/{example2}]
-request.Context().Value("example")
-request.Context().Value("example2")
+#### And woks with **`multiple`** values:
 
-Special thanks to @coursar and @AlisherFozilov
+[https://example.com/{value1}/{value2}]
+**_request.Context().Value("value1")_** - gets the first value
+
+**_request.Context().Value("value2")_** - gets the second value
+
+Special thanks to **@coursar** and **@AlisherFozilov**

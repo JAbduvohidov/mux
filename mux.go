@@ -201,7 +201,7 @@ func addAllParametersToRequest(path string, request *http.Request, pathParts []s
 	parametersNames := getParameterNames(pathParts)
 
 	if len(parametersValues) != len(parametersNames) {
-		log.Fatal("fuck : ", len(parametersValues), len(pathParts))
+		log.Fatal("paramsValues and paramsNames must have same item count : ", len(parametersValues), len(pathParts))
 	}
 
 	for index := range parametersNames {
