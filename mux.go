@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-type exactMux struct {
+type ExactMux struct {
 	mutex           sync.RWMutex
 	routes          map[string]map[string]exactMuxEntry
 	paramRoutes     map[string][]paramsMuxEntry
@@ -25,11 +25,11 @@ type paramsMuxEntry struct {
 
 type Middleware func(handler http.HandlerFunc) http.HandlerFunc
 
-func NewExactMux() *exactMux {
-	return &exactMux{}
+func NewExactMux() *ExactMux {
+	return &ExactMux{}
 }
 
-func (m *exactMux) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+func (m *ExactMux) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	if handler, err := m.handler(request.Method, request.URL.Path); err == nil {
 		handler.ServeHTTP(writer, request)
 	}
@@ -39,7 +39,7 @@ func (m *exactMux) ServeHTTP(writer http.ResponseWriter, request *http.Request) 
 	}
 }
 
-func (m *exactMux) GET(
+func (m *ExactMux) GET(
 	pattern string,
 	handlerFunc http.HandlerFunc,
 	middlewares ...Middleware,
@@ -52,7 +52,7 @@ func (m *exactMux) GET(
 	)
 }
 
-func (m *exactMux) POST(
+func (m *ExactMux) POST(
 	pattern string,
 	handlerFunc http.HandlerFunc,
 	middlewares ...Middleware,
@@ -65,7 +65,7 @@ func (m *exactMux) POST(
 	)
 }
 
-func (m *exactMux) DELETE(
+func (m *ExactMux) DELETE(
 	pattern string,
 	handlerFunc http.HandlerFunc,
 	middlewares ...Middleware,
@@ -78,7 +78,7 @@ func (m *exactMux) DELETE(
 	)
 }
 
-func (m *exactMux) HandleFuncWithMiddlewares(
+func (m *ExactMux) HandleFuncWithMiddlewares(
 	method string,
 	pattern string,
 	handlerFunc http.HandlerFunc,
@@ -90,7 +90,7 @@ func (m *exactMux) HandleFuncWithMiddlewares(
 	m.HandleFunc(method, pattern, handlerFunc)
 }
 
-func (m *exactMux) handler(method string, path string) (handler http.Handler, err error) {
+func (m *ExactMux) handler(method string, path string) (handler http.Handler, err error) {
 	entries, exists := m.routes[method]
 	if exists {
 		if entry, ok := entries[path]; ok {
@@ -109,7 +109,7 @@ func (m *exactMux) handler(method string, path string) (handler http.Handler, er
 	}
 	return nil, fmt.Errorf("can't find handler for: %s, %s", method, path)
 }
-func (m *exactMux) HandleFunc(method string, pattern string, handlerFunc func(responseWriter http.ResponseWriter, request *http.Request)) {
+func (m *ExactMux) HandleFunc(method string, pattern string, handlerFunc func(responseWriter http.ResponseWriter, request *http.Request)) {
 	if !strings.HasPrefix(pattern, "/") {
 		panic(fmt.Errorf("pattern must start with /: %s", pattern))
 	}
@@ -189,7 +189,7 @@ func isPathWithParams(pattern string) bool {
 	return false
 }
 
-func (m *exactMux) ParamFunc(handler func(w http.ResponseWriter, r *http.Request), pathParts []string) http.HandlerFunc {
+func (m *ExactMux) ParamFunc(handler func(w http.ResponseWriter, r *http.Request), pathParts []string) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		request = addAllParametersToRequest(request.URL.Path, request, pathParts)
 		handler(writer, request)
