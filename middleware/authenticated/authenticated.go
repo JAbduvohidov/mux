@@ -5,15 +5,21 @@ import (
 	"net/http"
 )
 
-func Authenticated(authenticated func(ctx context.Context) bool) func(next http.HandlerFunc) http.HandlerFunc {
+func Authenticated(empty func(ctx context.Context) bool, redirect bool, redirectURL string) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(writer http.ResponseWriter, request *http.Request) {
-			if !authenticated(request.Context()) {
-				http.Error(writer, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			if !empty(request.Context()) {
+				next(writer, request)
 				return
 			}
 
-			next(writer, request)
+			if redirect {
+				http.Redirect(writer, request, redirectURL, http.StatusTemporaryRedirect)
+				return
+			}
+
+			http.Error(writer, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
 		}
 	}
 }

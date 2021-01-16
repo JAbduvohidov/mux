@@ -65,6 +65,19 @@ func (m *ExactMux) POST(
 	)
 }
 
+func (m *ExactMux) PUT(
+	pattern string,
+	handlerFunc http.HandlerFunc,
+	middlewares ...Middleware,
+) {
+	m.HandleFuncWithMiddlewares(
+		http.MethodPut,
+		pattern,
+		handlerFunc,
+		middlewares...,
+	)
+}
+
 func (m *ExactMux) DELETE(
 	pattern string,
 	handlerFunc http.HandlerFunc,

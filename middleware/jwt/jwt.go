@@ -2,7 +2,7 @@ package jwt
 
 import (
 	"context"
-	jwtcore "github.com/JAbduvohidov/jwt"
+	"github.com/JAbduvohidov/jwt"
 	"log"
 	"net/http"
 	"reflect"
@@ -10,26 +10,49 @@ import (
 	"time"
 )
 
-type contextKey string
-var payloadContextKey = contextKey("jwt")
+type ContextKey string
 
-func JWT(payloadType reflect.Type, secret jwtcore.Secret) func(next http.HandlerFunc) http.HandlerFunc {
+var payloadContextKey = ContextKey("jwt")
+
+const (
+	SourceAuthorization = iota
+	SourceCookie
+)
+
+func JWT(source int, payloadType reflect.Type, secret jwt.Secret) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(writer http.ResponseWriter, request *http.Request) {
-			header := request.Header.Get("Authorization")
-			if header == "" {
+			token := ""
+
+			switch source {
+			case SourceAuthorization:
+				// TODO: move to func
+				header := request.Header.Get("Authorization")
+				if header == "" {
+					break
+				}
+				if !strings.HasPrefix(header, "Bearer ") {
+					break
+				}
+				token = header[len("Bearer "):]
+			case SourceCookie:
+				// TODO: move to func
+				cookie, err := request.Cookie("token")
+				if err != nil {
+					if err == http.ErrNoCookie {
+						break
+					}
+					break
+				}
+				token = cookie.Value
+			}
+
+			if token == "" {
 				next(writer, request)
 				return
 			}
 
-			if !strings.HasPrefix(header, "Bearer ") {
-				next(writer, request)
-				return
-			}
-
-			token := header[len("Bearer "):]
-
-			ok, err := jwtcore.Verify(token, secret)
+			ok, err := jwt.Verify(token, secret)
 			if err != nil {
 				http.Error(writer, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 				return
@@ -42,13 +65,13 @@ func JWT(payloadType reflect.Type, secret jwtcore.Secret) func(next http.Handler
 
 			payload := reflect.New(payloadType).Interface()
 
-			err = jwtcore.Decode(token, payload)
+			err = jwt.Decode(token, payload)
 			if err != nil {
 				http.Error(writer, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 				return
 			}
 
-			ok, err = jwtcore.IsNotExpired(payload, time.Now())
+			ok, err = jwt.IsNotExpired(payload, time.Now())
 			if err != nil {
 				http.Error(writer, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 				return
